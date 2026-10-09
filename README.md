@@ -174,6 +174,23 @@ OUTPUT_PATH=./output        # Where images are saved
 CUSTOM_NODES_PATH=./custom_nodes
 ```
 
+### Running Rootless (Non-Root)
+
+ComfyUI runs inside the container as an unprivileged user, not root. This means files it creates (images, workflows, custom nodes) are owned by your host user instead of root.
+
+```env
+PUID=1000   # your host user's UID (check: id -u)
+PGID=1000   # your host user's GID (check: id -g)
+```
+
+Notes:
+- If you previously ran the container as root, fix existing files once:
+  `sudo chown -R $(id -u):$(id -g) models output input custom_nodes user`
+- Rebuild after changing `PUID`/`PGID` so the in-image ownership matches
+- Runtime installs from custom node `install.py` scripts go to the user's home
+  (`~/.local` inside the container) - bake dependencies into the image by
+  rebuilding as described above for anything you want persistent
+
 ### GPU Memory Management
 
 ```env

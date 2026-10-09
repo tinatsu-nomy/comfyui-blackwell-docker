@@ -10,9 +10,13 @@ ARG COMFYUI_BRANCH=master
 ARG SAGEATTENTION_VERSION=v2
 ARG SAGEATTENTION_USE=1
 ARG TORCH_CUDA_ARCH_LIST=12.0
+ARG RUN_UID=1000
+ARG RUN_GID=1000
 
 FROM ${CUDA_BASE_IMAGE}
 # Re-declaring these ARGs so they are available inside this build stage
+ARG RUN_UID
+ARG RUN_GID
 ARG SAGEATTENTION_VERSION
 ARG TORCH_WHEEL_URL
 ARG TORCHVISION_WHEEL_URL
@@ -138,6 +142,27 @@ fi\n\
 echo "Starting ComfyUI..."\n\
 exec "$@"\n\
 ' > /app/startup.sh && chmod +x /app/startup.sh
+
+# Rootless runtime setup
+# Create an unprivileged user matching the host user (RUN_UID/RUN_GID) that owns
+# the bind-mounted folders, so ComfyUI never runs as root and created files
+# (outputs, workflows, custom nodes) are owned by your host user.
+# NOTE: The Ubuntu base image ships with a default 'ubuntu' user at 1000:1000,
+# remove it first to avoid UID/GID conflicts.
+RUN (userdel -r ubuntu >/dev/null 2>&1 || true) && \
+    groupadd -f -g ${RUN_GID} comfyui && \
+    useradd -u ${RUN_UID} -g ${RUN_GID} -d /home/comfyui -m -s /bin/bash comfyui && \
+    chown -R ${RUN_UID}:${RUN_GID} /app /home/comfyui
+
+# Writable HOME for the runtime user (pip --user, triton cache, git config, etc.)
+ENV HOME=/home/comfyui
+ENV XDG_CACHE_HOME=/home/comfyui/.cache
+# Runtime pip installs (custom node install.py scripts) go to the user's home
+# instead of system site-packages, which is read-only to non-root
+ENV PIP_USER=1
+
+# Run as the non-root user
+USER comfyui
 
 # Expose ComfyUI web interface port
 EXPOSE 8188

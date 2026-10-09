@@ -12,8 +12,14 @@ services:
         - SAGEATTENTION_VERSION=${SAGEATTENTION_VERSION:-v2}
         - SAGEATTENTION_USE=${SAGEATTENTION_USE:-1}
         - TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST:-12.0}
+        - RUN_UID=${PUID:-1000}
+        - RUN_GID=${PGID:-1000}
     
     container_name: comfyui
+    
+    # Run rootless: as your host user so created files aren't owned by root
+    # Rebuild the image after changing PUID/PGID so /app ownership matches
+    user: "${PUID:-1000}:${PGID:-1000}"
     
     ports:
       - "${COMFYUI_PORT:-8188}:8188"
