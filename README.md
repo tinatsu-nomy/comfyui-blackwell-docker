@@ -164,6 +164,35 @@ docker-compose build  # Installs all new requirements
 docker-compose up -d
 ```
 
+### Updating Custom Nodes
+
+Nodes are **never updated automatically**: the build skips cloning if the node
+folder already exists, and the baked-in copies are copied over on container
+start without overwriting existing files. To update a node:
+
+1. **Remove or update the node code** in your mounted `custom_nodes/` folder:
+   ```bash
+   # Option 1: let the next build clone a fresh copy
+   rm -rf custom_nodes/ComfyUI-KJNodes
+
+   # Option 2: update in place with git
+   cd custom_nodes/ComfyUI-KJNodes && git pull
+   ```
+   If the node is declared in `CUSTOM_NODES_URLS` with a pinned tag
+   (`...#v1.2.3`), update the tag in `.env` first, then remove the folder.
+
+2. **Rebuild and restart** so new/changed `requirements.txt` dependencies get
+   installed:
+   ```bash
+   docker-compose down
+   docker-compose build
+   docker-compose up -d
+   ```
+
+Alternatively, use ComfyUI Manager's "Update" buttons to update the node code,
+then rebuild the image as above (without a rebuild, updated dependencies will
+be missing at runtime).
+
 ## Using NVFP4 Models
 
 To get the performance benefits, you need 4-bit quantized models:
