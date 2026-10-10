@@ -103,7 +103,34 @@ comfyui-blackwell-docker/
 
 This is where Docker differs from a normal ComfyUI installation:
 
-### The Process
+### Option A: Declare nodes in `.env` (recommended)
+
+List git URLs of the nodes you want in `.env` (space separated) and rebuild:
+
+```env
+CUSTOM_NODES_URLS="https://github.com/Comfy-Org/ComfyUI-Manager.git https://github.com/kijai/ComfyUI-KJNodes.git"
+```
+
+Pin a tag/branch with a `#` suffix: `https://github.com/owner/node.git#v1.2.3`
+
+During `docker-compose build`:
+
+1. Each repo is cloned into `custom_nodes/`
+2. **ComfyUI's `requirements.txt` and every node's `requirements.txt` are
+   resolved in ONE pip pass**, so pip reconciles version conflicts between
+   ComfyUI and the nodes together - while `constraints.txt` keeps the exact
+   PyTorch/CUDA wheels pinned no matter what a node asks for
+3. Each node's `install.py` runs at build time (as root inside the build, so
+   apt packages and compilation work), with a 15 minute timeout each.
+   Disable with `RUN_NODE_INSTALLERS=0`
+
+The nodes are baked into the image and also copied into your mounted
+`custom_nodes/` folder on container start (existing files are never
+overwritten), so ComfyUI Manager sees them and you can back them up.
+
+### Option B: The classic Manager workflow
+
+#### The Process
 
 1. **Install via ComfyUI Manager** (as usual)
    - Open ComfyUI in your browser
