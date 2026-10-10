@@ -17,7 +17,9 @@ services:
         - CUSTOM_NODES_URLS=${CUSTOM_NODES_URLS:-}
         - RUN_NODE_INSTALLERS=${RUN_NODE_INSTALLERS:-1}
     
-    container_name: comfyui
+    image: ${IMAGE_NAME:-comfyui-blackwell:latest}
+    
+    container_name: ${CONTAINER_NAME:-comfyui}
     
     # Run rootless: as your host user so created files aren't owned by root
     # Rebuild the image after changing PUID/PGID so /app ownership matches
